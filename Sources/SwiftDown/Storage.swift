@@ -104,8 +104,9 @@ public class Storage: NSTextStorage {
     }
     let md = markdowner(paragraph, paragraphNSRange.lowerBound)
     setAttributes(applyBody(), range: paragraphNSRange)
-    md.forEach {
-      addAttributes(applyMarkdown($0), range: $0.range)
+    md.forEach { markdown in
+        
+      addAttributes(applyMarkdown(markdown), range: markdown.range)
     }
     self.edited(.editedAttributes, range: paragraphNSRange, changeInLength: 0)
   }
