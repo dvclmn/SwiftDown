@@ -170,24 +170,29 @@ public struct SwiftDownEditor: NSViewRepresentable {
       self.onSelectionChange = onSelectionChange
    }
    
-   public func makeNSView(context: Context) -> SwiftDown {
-      let swiftDown = SwiftDown(theme: theme, isEditable: isEditable, insetsSize: insetsSize)
+   public func makeNSView(context: Context) -> CustomTextView {
+      let swiftDown = CustomTextView(
+         frame: NSRect(origin: .zero, size: CGSize(width: 200, height: 200)),
+         theme: theme,
+         isEditable: isEditable,
+         insetsSize: insetsSize, 
+         textContainer: nil
+      )
       swiftDown.delegate = context.coordinator
       swiftDown.setupTextView()
-      swiftDown.text = text
+
+      swiftDown.string = text
       
-      // Update the initial height
       DispatchQueue.main.async {
          
-         let newHeight = swiftDown.editorHeight
-         context.coordinator.calculateNewHeight(text, newHeight)
+         context.coordinator.calculateNewHeight(text, swiftDown.editorHeight)
          
       }
       
       return swiftDown
    }
    
-   public func updateNSView(_ nsView: SwiftDown, context: Context) {
+   public func updateNSView(_ nsView: CustomTextView, context: Context) {
       context.coordinator.parent = self
       context.coordinator.cancellable?.cancel()
       context.coordinator.cancellable = Timer
@@ -196,12 +201,11 @@ public struct SwiftDownEditor: NSViewRepresentable {
          .first()
          .sink { _ in
             let selectedRanges = nsView.selectedRanges
-            nsView.text = text
+            nsView.string = text
             nsView.applyStyles()
+            context.coordinator.calculateNewHeight(text, nsView.editorHeight)
             nsView.selectedRanges = selectedRanges
       
-            let newHeight = nsView.editorHeight
-            context.coordinator.calculateNewHeight(text, newHeight)
          }
       
    }
@@ -226,14 +230,12 @@ extension SwiftDownEditor {
       }
       
       public func textDidChange(_ notification: Notification) {
-         guard let textView = notification.object as? NSTextView,
-               let swiftDown = textView.superview as? SwiftDown
+         guard let textView = notification.object as? CustomTextView
          else { return }
          
          self.parent.text = textView.string
          
-         let newHeight = swiftDown.editorHeight
-         calculateNewHeight(textView.string, newHeight)
+         calculateNewHeight(textView.string, textView.editorHeight)
 
       }
       
@@ -299,8 +301,8 @@ struct SwiftDownExampleView: View {
          SwiftDownEditor(text: $text, editorHeight: $boundEditorHeight, onTextChange: { text, editorHeight in
             closureEditorHeight = editorHeight
          })
-            .frame(height: closureEditorHeight)
-            .border(Color.green.opacity(0.3))
+//            .frame(height: closureEditorHeight)
+//            .border(Color.green.opacity(0.3))
          
       }
       

@@ -56,36 +56,110 @@ public class SwiftDown: UITextView, UITextViewDelegate {
 import AppKit
 
 // MARK: - CustomTextView
-class CustomTextView: NSTextView {
+public class CustomTextView: NSTextView {
+   
+   //   private var isEditable: Bool
+   private var insetsSize: CGFloat = .zero
+   
+   //   weak var delegate: NSTextViewDelegate? {
+   //      didSet {
+   //         self.delegate = delegate
+   //      }
+   //   }
+   
+   let engine = MarkdownEngine()
+   var highlighter: SwiftDownHighlighter!
+   
+   //   var text: String {
+   //      didSet {
+   //         self.string = text
+   //      }
+   //   }
+   
+   
+   //   var selectedRanges: [NSValue] {
+   //      get {
+   //         textView.selectedRanges
+   //      }
+   //      set(value) {
+   //         textView.selectedRanges = value
+   //      }
+   //   }
    
    var storage: Storage = Storage()
    var editorHeight: CGFloat = .zero
    
-   convenience init(
-      frame: CGRect,
-      theme: Theme
-   ) {
-      self.init(frame: frame, textContainer: nil)
-      self.storage.theme = theme
-      self.backgroundColor = theme.backgroundColor
-   }
+   //   convenience init(
+   //      frame: CGRect,
+   //      theme: Theme,
+   //      isEditable: Bool,
+   //      insetsSize: CGFloat = 0
+   //   ) {
+   //      self.init(frame: frame, textContainer: nil)
+   //      self.storage.theme = theme
+   //      self.backgroundColor = theme.backgroundColor
+   //   }
    
-   override init(frame: CGRect, textContainer: NSTextContainer?) {
+   init(
+      frame: CGRect,
+      theme: Theme,
+      isEditable: Bool,
+      insetsSize: CGFloat = 0,
+      textContainer: NSTextContainer?
+   ) {
+      
+      self.storage.theme = theme
+      
+      
       let layoutManager = NSLayoutManager()
       let containerSize = CGSize(width: frame.size.width, height: CGFloat.greatestFiniteMagnitude)
       let container = NSTextContainer(size: containerSize)
       container.widthTracksTextView = true
       
+      
+      
       layoutManager.addTextContainer(container)
       storage.addLayoutManager(layoutManager)
+      
       super.init(frame: frame, textContainer: container)
+
+      
+      
+      //      let textView = CustomTextView(
+      //         frame: scrollView.frame,
+      //         theme: theme
+      //      )
+      
+      //      textView.string = text
+      self.storage.markdowner = { self.engine.render($0, offset: $1) }
+      self.storage.applyMarkdown = { m in
+         Theme.applyMarkdown(markdown: m, with: theme)
+      }
+      self.storage.applyBody = { Theme.applyBody(with: theme) }
+      self.storage.theme = theme
+      
+      self.autoresizingMask = .width
+      self.drawsBackground = false
+      self.isEditable = self.isEditable
+      self.isHorizontallyResizable = false
+      self.isVerticallyResizable = true
+      self.maxSize = NSSize(
+         width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+      self.minSize = NSSize(width: 0, height: editorHeight)
+      self.textContainerInset = NSSize(width: self.insetsSize, height: self.insetsSize)
+      self.allowsUndo = true
+      self.allowsDocumentBackgroundColorChange = true
+      //      self.backgroundColor = theme.backgroundColor
+      self.insertionPointColor = theme.cursorColor
+//      self.textColor = theme.tintColor
+
    }
    
    required init?(coder: NSCoder) {
       fatalError("init(coder:) has not been implemented")
    }
    
-   override var intrinsicContentSize: NSSize {
+   public override var intrinsicContentSize: NSSize {
       
       guard let layoutManager = self.layoutManager, let container = self.textContainer else {
          return super.intrinsicContentSize
@@ -94,26 +168,45 @@ class CustomTextView: NSTextView {
       layoutManager.ensureLayout(for: container)
       
       let rect = layoutManager.usedRect(for: container).size
-
+      
       let contentSize = NSSize(width: NSView.noIntrinsicMetric, height: rect.height)
-
+      
       self.editorHeight = contentSize.height
       
       return contentSize
    }
    
-   override func didChangeText() {
+   public override func didChangeText() {
       super.didChangeText()
       invalidateIntrinsicContentSize()
-              editorHeight = intrinsicContentSize.height
+      editorHeight = intrinsicContentSize.height
       //        heightChangeHandler(height)
    }
    
-   override func viewWillDraw() {
+   public override func viewWillDraw() {
       super.viewWillDraw()
-      invalidateIntrinsicContentSize()
-      editorHeight = intrinsicContentSize.height
+      setupTextView()
+//      invalidateIntrinsicContentSize()
+//      editorHeight = intrinsicContentSize.height
    }
+   
+   
+   func setupTextView() {
+      
+      highlighter = SwiftDownHighlighter(textView: self)
+      
+      
+      
+   }
+   
+   func applyStyles() {
+      assert(highlighter != nil)
+      highlighter.applyStyles()
+   }
+   
+   
+   
+   
 }
 
 
@@ -124,139 +217,48 @@ class TransparentBackgroundScroller: NSScroller {
    }
 }
 
-public class SwiftDown: NSView {
-   var theme: Theme
-   private var isEditable: Bool
-   private var insetsSize: CGFloat
-   
-   weak var delegate: NSTextViewDelegate? {
-      didSet {
-         textView.delegate = delegate
-      }
-   }
-   
-   let engine = MarkdownEngine()
-   var highlighter: SwiftDownHighlighter!
-   
-   var text: String {
-      didSet {
-         textView.string = text
-      }
-   }
-   
-   var editorHeight: CGFloat {
-      return textView.editorHeight
-   }
-   
-   var selectedRanges: [NSValue] {
-      get {
-         textView.selectedRanges
-      }
-      set(value) {
-         textView.selectedRanges = value
-      }
-   }
-   
-   // MARK: - ScrollView setup
-   private lazy var scrollView: NSScrollView = {
-      let scrollView = NSScrollView()
-      scrollView.drawsBackground = false
-      scrollView.borderType = .noBorder
-      scrollView.hasVerticalScroller = true
-      scrollView.hasHorizontalRuler = false
-      scrollView.autoresizingMask = [.width, .height]
-      scrollView.translatesAutoresizingMaskIntoConstraints = false
-      scrollView.autohidesScrollers = true
-      scrollView.borderType = .noBorder
-      scrollView.verticalScroller = TransparentBackgroundScroller()
-      return scrollView
-   }()
-   
-   // MARK: - TextView setup
-   private lazy var textView: CustomTextView = {
-      let contentSize = scrollView.contentSize
-      let textView = CustomTextView(
-         frame: scrollView.frame,
-         theme: theme
-      )
-      textView.delegate = self.delegate
-      textView.string = text
-      textView.storage.markdowner = { self.engine.render($0, offset: $1) }
-      textView.storage.applyMarkdown = { m in Theme.applyMarkdown(markdown: m, with: self.theme) }
-      textView.storage.applyBody = { Theme.applyBody(with: self.theme) }
-      textView.storage.theme = theme
-      textView.autoresizingMask = .width
-      textView.drawsBackground = false
-      textView.isEditable = self.isEditable
-      textView.isHorizontallyResizable = false
-      textView.isVerticallyResizable = true
-      textView.maxSize = NSSize(
-         width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-      textView.minSize = NSSize(width: 0, height: contentSize.height)
-      textView.textContainerInset = NSSize(width: self.insetsSize, height: self.insetsSize)
-      textView.allowsUndo = true
-      textView.allowsDocumentBackgroundColorChange = true
-      //      textView.backgroundColor = theme.backgroundColor
-      textView.insertionPointColor = theme.cursorColor
-      textView.textColor = theme.tintColor
-      
-      return textView
-   }()
-   
-   init(
-      theme: Theme,
-      isEditable: Bool,
-      insetsSize: CGFloat = 0
-   ) {
-      self.isEditable = isEditable
-      self.text = ""
-      self.theme = theme
-      self.insetsSize = insetsSize
-      
-      super.init(frame: .zero)
-   }
-   
-   required init?(coder: NSCoder) {
-      fatalError("init(coder:) has not been implemented")
-   }
-   
-   public override func viewWillDraw() {
-      super.viewWillDraw()
-      
-      setupScrollViewConstraints()
-      setupTextView()
-   }
-   
-   func setupScrollViewConstraints() {
-      scrollView.translatesAutoresizingMaskIntoConstraints = false
-      
-      addSubview(scrollView)
-      
-      NSLayoutConstraint.activate([
-         scrollView.topAnchor.constraint(equalTo: topAnchor),
-         scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-         scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-         scrollView.leadingAnchor.constraint(equalTo: leadingAnchor)
-      ])
-   }
-   
-   func setupTextView() {
-      scrollView.documentView = textView
-      highlighter = SwiftDownHighlighter(textView: textView)
-   }
-   
-   func applyStyles() {
-      assert(highlighter != nil)
-      highlighter.applyStyles()
-   }
-   
-   func getContentHeight() -> CGFloat {
-      guard let layoutManager = textView.layoutManager,
-            let container = textView.textContainer
-      else { return .zero }
-      
-      layoutManager.ensureLayout(for: container)
-      return layoutManager.usedRect(for: container).height
-   }
-}
+//public class SwiftDown: NSView {
+
+
+// MARK: - ScrollView setup
+//   private lazy var scrollView: NSScrollView = {
+//      let scrollView = NSScrollView()
+//      scrollView.drawsBackground = false
+//      scrollView.borderType = .noBorder
+//      scrollView.hasVerticalScroller = true
+//      scrollView.hasHorizontalRuler = false
+//      scrollView.autoresizingMask = [.width, .height]
+//      scrollView.translatesAutoresizingMaskIntoConstraints = false
+//      scrollView.autohidesScrollers = true
+//      scrollView.borderType = .noBorder
+//      scrollView.verticalScroller = TransparentBackgroundScroller()
+//      return scrollView
+//   }()
+//
+// MARK: - TextView setup
+//   private lazy var textView: CustomTextView = {
+//
+//      return textView
+//   }()
+
+//   init(
+//      theme: Theme,
+//      isEditable: Bool,
+//
+//   ) {
+//      self.isEditable = isEditable
+//      self.text = ""
+//      self.theme = theme
+//      self.insetsSize = insetsSize
+//
+//      super.init(frame: .zero)
+//   }
+
+//   required init?(coder: NSCoder) {
+//      fatalError("init(coder:) has not been implemented")
+//   }
+
+
+
+//}
 #endif
