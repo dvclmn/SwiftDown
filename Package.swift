@@ -19,12 +19,13 @@ let package = Package(
       url: "https://github.com/johnxnguyen/Down.git",
       from: "0.11.0"
     ),
+    .package(name: "TestStrings", path: "/Users/dvclmn/Apps/_ Swift Packages/TestStrings"),
     .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "9.0.0")),
   ],
   targets: [
     .target(
       name: "SwiftDown",
-      dependencies: ["Down"],
+      dependencies: ["Down", "TestStrings"],
       exclude: ["../../SwiftDownDemo"],
       resources: [.copy("Resources/Themes")]
     ),

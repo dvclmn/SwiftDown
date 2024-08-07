@@ -5,54 +5,9 @@
 //  Created by Quentin Eude on 16/03/2021.
 //
 
-#if os(iOS)
-import UIKit
 
-// MARK: - SwiftDown iOS
-public class SwiftDown: UITextView, UITextViewDelegate {
-   var storage: Storage = Storage()
-   var highlighter: SwiftDownHighlighter?
-   var hasKeyboardToolbar: Bool = true
-   
-   convenience init(frame: CGRect, theme: Theme) {
-      self.init(frame: frame, textContainer: nil)
-      self.storage.theme = theme
-      self.backgroundColor = theme.backgroundColor
-      self.tintColor = theme.tintColor
-      self.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      if hasKeyboardToolbar {
-         self.addKeyboardToolbar()
-      }
-   }
-   
-   override init(frame: CGRect, textContainer: NSTextContainer?) {
-      let layoutManager = NSLayoutManager()
-      let containerSize = CGSize(width: frame.size.width, height: frame.size.height)
-      let container = NSTextContainer(size: containerSize)
-      container.widthTracksTextView = true
-      
-      layoutManager.addTextContainer(container)
-      storage.addLayoutManager(layoutManager)
-      super.init(frame: frame, textContainer: container)
-      self.delegate = self
-   }
-   
-   required init?(coder aDecoder: NSCoder) {
-      super.init(coder: aDecoder)
-      let layoutManager = NSLayoutManager()
-      let containerSize = CGSize(width: frame.size.width, height: CGFloat.greatestFiniteMagnitude)
-      let container = NSTextContainer(size: containerSize)
-      container.widthTracksTextView = true
-      layoutManager.addTextContainer(container)
-      storage.addLayoutManager(layoutManager)
-      self.delegate = self
-   }
-   
-   public override func willMove(toSuperview newSuperview: UIView?) {
-      self.highlighter = SwiftDownHighlighter(textView: self)
-   }
-}
-#else
+#if os(macOS)
+
 import AppKit
 
 // MARK: - CustomTextView
@@ -66,11 +21,13 @@ public class CustomTextView: NSTextView {
    var editorHeight: CGFloat = .zero
    var insetsSize: CGFloat
    
+   var metrics: String = ""
+   
    init(
       frame: CGRect,
       theme: Theme,
       isEditable: Bool,
-      insetsSize: CGFloat = 40,
+      insetsSize: CGFloat,
       textContainer: NSTextContainer?
    ) {
       
@@ -95,7 +52,7 @@ public class CustomTextView: NSTextView {
       self.storage.applyBody = { Theme.applyBody(with: theme) }
       self.storage.theme = theme
       
-      self.autoresizingMask = .width
+//      self.autoresizingMask = .width
       self.drawsBackground = false
       self.isEditable = isEditable
       self.isHorizontallyResizable = false
@@ -126,7 +83,7 @@ public class CustomTextView: NSTextView {
       
       let contentSize = NSSize(width: NSView.noIntrinsicMetric, height: rect.height)
       
-      self.editorHeight = contentSize.height
+//      self.editorHeight = contentSize.height
       
       return contentSize
    }
@@ -134,29 +91,50 @@ public class CustomTextView: NSTextView {
    public override func didChangeText() {
       super.didChangeText()
       invalidateIntrinsicContentSize()
-//      editorHeight = intrinsicContentSize.height
-      //        heightChangeHandler(height)
+      
+      self.updateEditorMetrics()
+      
+      editorHeight = intrinsicContentSize.height
+
    }
    
    public override func viewWillDraw() {
       super.viewWillDraw()
+
       setupTextView()
-      invalidateIntrinsicContentSize()
-//      editorHeight = intrinsicContentSize.height
+      self.updateEditorMetrics()
+      self.editorHeight = self.intrinsicContentSize.height
+   }
+   
+   var viewUpdatesCount: Int = 0
+   var nsViewUpdateCount: Int = 0
+   var lastFunctionToEditText: String = ""
+
+   
+   private func updateEditorMetrics() {
+      
+      let result = """
+      Insets: \(self.insetsSize)
+      View updates: \\(self.viewUpdatesCount)
+      NSView updates: \(self.nsViewUpdateCount)
+      Edited text: \(self.lastFunctionToEditText)
+      
+      Editor height: \(self.editorHeight.formatted())
+      """
+      
+      self.metrics = result
    }
    
    
    func setupTextView() {
-      
       highlighter = SwiftDownHighlighter(textView: self)
-      
-      
-      
    }
    
    func applyStyles() {
       assert(highlighter != nil)
+      let selected = self.selectedRanges
       highlighter.applyStyles()
+      self.selectedRanges = selected
    }
    
    
