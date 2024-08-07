@@ -144,12 +144,7 @@ extension SwiftDownEditor {
 // MARK: - SwiftDownEditor macOS
 public struct SwiftDownEditor: NSViewRepresentable {
    private var debounceTime = 0.3
-   @Binding var text: String {
-      didSet {
-         onTextChange(text, editorHeight)
-      }
-   }
-   @Binding var editorHeight: CGFloat
+   @Binding public var text: String
    
    private(set) var isEditable: Bool = true
    private(set) var theme: Theme = Theme.BuiltIn.defaultDark.theme()
@@ -160,36 +155,39 @@ public struct SwiftDownEditor: NSViewRepresentable {
    
    public init(
       text: Binding<String>,
-      editorHeight: Binding<CGFloat>,
+//      editorHeight: Binding<CGFloat>,
       onTextChange: @escaping (_ text: String, _ editorHeight: CGFloat) -> Void = { _, _ in },
       onSelectionChange: @escaping (NSRange) -> Void = { _ in }
    ) {
       self._text = text
-      self._editorHeight = editorHeight
+//      self._editorHeight = editorHeight
       self.onTextChange = onTextChange
       self.onSelectionChange = onSelectionChange
    }
    
    public func makeNSView(context: Context) -> CustomTextView {
-      let swiftDown = CustomTextView(
+         
+      let textView = CustomTextView(
          frame: NSRect(origin: .zero, size: CGSize(width: 200, height: 200)),
          theme: theme,
          isEditable: isEditable,
          insetsSize: insetsSize, 
          textContainer: nil
       )
-      swiftDown.delegate = context.coordinator
-      swiftDown.setupTextView()
+      textView.delegate = context.coordinator
+      textView.setupTextView()
 
-      swiftDown.string = text
+      textView.string = text
       
-      DispatchQueue.main.async {
-         
-         context.coordinator.calculateNewHeight(text, swiftDown.editorHeight)
-         
-      }
+      textView.invalidateIntrinsicContentSize()
+//      textView.editorHeight = 
+//      DispatchQueue.main.async {
+//         
+//         context.coordinator.calculateNewHeight(text, swiftDown.editorHeight)
+//         
+//      }
       
-      return swiftDown
+      return textView
    }
    
    public func updateNSView(_ nsView: CustomTextView, context: Context) {
@@ -298,12 +296,15 @@ struct SwiftDownExampleView: View {
       VStack {
          Text("Bound Editor height: \(boundEditorHeight)")
          Text("Closure Editor height: \(closureEditorHeight)")
-         SwiftDownEditor(text: $text, editorHeight: $boundEditorHeight, onTextChange: { text, editorHeight in
+         SwiftDownEditor(
+            text: $text,
+            onTextChange: {
+            text, editorHeight in
             closureEditorHeight = editorHeight
          })
-//            .frame(height: closureEditorHeight)
-//            .border(Color.green.opacity(0.3))
-         
+            .frame(height: closureEditorHeight)
+            .border(Color.green.opacity(0.3))
+         Spacer()
       }
       
    }
