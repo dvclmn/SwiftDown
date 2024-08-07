@@ -58,58 +58,24 @@ import AppKit
 // MARK: - CustomTextView
 public class CustomTextView: NSTextView {
    
-   //   private var isEditable: Bool
-   private var insetsSize: CGFloat = .zero
-   
-   //   weak var delegate: NSTextViewDelegate? {
-   //      didSet {
-   //         self.delegate = delegate
-   //      }
-   //   }
    
    let engine = MarkdownEngine()
    var highlighter: SwiftDownHighlighter!
-   
-   //   var text: String {
-   //      didSet {
-   //         self.string = text
-   //      }
-   //   }
-   
-   
-   //   var selectedRanges: [NSValue] {
-   //      get {
-   //         textView.selectedRanges
-   //      }
-   //      set(value) {
-   //         textView.selectedRanges = value
-   //      }
-   //   }
-   
+  
    var storage: Storage = Storage()
    var editorHeight: CGFloat = .zero
-   
-   //   convenience init(
-   //      frame: CGRect,
-   //      theme: Theme,
-   //      isEditable: Bool,
-   //      insetsSize: CGFloat = 0
-   //   ) {
-   //      self.init(frame: frame, textContainer: nil)
-   //      self.storage.theme = theme
-   //      self.backgroundColor = theme.backgroundColor
-   //   }
+   var insetsSize: CGFloat
    
    init(
       frame: CGRect,
       theme: Theme,
       isEditable: Bool,
-      insetsSize: CGFloat = 0,
+      insetsSize: CGFloat = 40,
       textContainer: NSTextContainer?
    ) {
       
       self.storage.theme = theme
-      
+      self.insetsSize = insetsSize
       
       let layoutManager = NSLayoutManager()
       let containerSize = CGSize(width: frame.size.width, height: CGFloat.greatestFiniteMagnitude)
@@ -117,20 +83,11 @@ public class CustomTextView: NSTextView {
       container.widthTracksTextView = true
       
       
-      
       layoutManager.addTextContainer(container)
       storage.addLayoutManager(layoutManager)
       
       super.init(frame: frame, textContainer: container)
 
-      
-      
-      //      let textView = CustomTextView(
-      //         frame: scrollView.frame,
-      //         theme: theme
-      //      )
-      
-      //      textView.string = text
       self.storage.markdowner = { self.engine.render($0, offset: $1) }
       self.storage.applyMarkdown = { m in
          Theme.applyMarkdown(markdown: m, with: theme)
@@ -140,18 +97,16 @@ public class CustomTextView: NSTextView {
       
       self.autoresizingMask = .width
       self.drawsBackground = false
-      self.isEditable = self.isEditable
+      self.isEditable = isEditable
       self.isHorizontallyResizable = false
       self.isVerticallyResizable = true
       self.maxSize = NSSize(
          width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-      self.minSize = NSSize(width: 0, height: editorHeight)
       self.textContainerInset = NSSize(width: self.insetsSize, height: self.insetsSize)
       self.allowsUndo = true
-      self.allowsDocumentBackgroundColorChange = true
-      //      self.backgroundColor = theme.backgroundColor
+//      self.allowsDocumentBackgroundColorChange = true
+   
       self.insertionPointColor = theme.cursorColor
-//      self.textColor = theme.tintColor
 
    }
    
@@ -179,14 +134,14 @@ public class CustomTextView: NSTextView {
    public override func didChangeText() {
       super.didChangeText()
       invalidateIntrinsicContentSize()
-      editorHeight = intrinsicContentSize.height
+//      editorHeight = intrinsicContentSize.height
       //        heightChangeHandler(height)
    }
    
    public override func viewWillDraw() {
       super.viewWillDraw()
       setupTextView()
-//      invalidateIntrinsicContentSize()
+      invalidateIntrinsicContentSize()
 //      editorHeight = intrinsicContentSize.height
    }
    

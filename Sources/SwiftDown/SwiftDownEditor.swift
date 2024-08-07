@@ -143,68 +143,79 @@ extension SwiftDownEditor {
 #else
 // MARK: - SwiftDownEditor macOS
 public struct SwiftDownEditor: NSViewRepresentable {
-   private var debounceTime = 0.3
+   private var debounceTime = 0.2
    @Binding public var text: String
    
    private(set) var isEditable: Bool = true
    private(set) var theme: Theme = Theme.BuiltIn.defaultDark.theme()
    private(set) var insetsSize: CGFloat = 0
    
-   public var onTextChange: (_ text: String, _ editorHeight: CGFloat) -> Void = { _, _ in }
-   public var onSelectionChange: (NSRange) -> Void = { _ in }
+   public var onTextChange: (_ text: String) -> Void = { _ in }
+   public var onSelectionChange: (NSRange) -> Void
+   
+   public var output: (_ editorHeight: CGFloat) -> Void
    
    public init(
       text: Binding<String>,
-//      editorHeight: Binding<CGFloat>,
-      onTextChange: @escaping (_ text: String, _ editorHeight: CGFloat) -> Void = { _, _ in },
-      onSelectionChange: @escaping (NSRange) -> Void = { _ in }
+      onTextChange: @escaping (_ text: String) -> Void = { _ in },
+      onSelectionChange: @escaping (NSRange) -> Void = { _ in },
+      output: @escaping (_ editorHeight: CGFloat) -> Void = { _ in }
    ) {
       self._text = text
-//      self._editorHeight = editorHeight
       self.onTextChange = onTextChange
       self.onSelectionChange = onSelectionChange
+      self.output = output
    }
    
+   private let minHeight: CGFloat = 60
+   
    public func makeNSView(context: Context) -> CustomTextView {
-         
+      
       let textView = CustomTextView(
          frame: NSRect(origin: .zero, size: CGSize(width: 200, height: 200)),
          theme: theme,
          isEditable: isEditable,
-         insetsSize: insetsSize, 
+         insetsSize: insetsSize,
          textContainer: nil
       )
       textView.delegate = context.coordinator
       textView.setupTextView()
-
+      
       textView.string = text
       
-      textView.invalidateIntrinsicContentSize()
-//      textView.editorHeight = 
-//      DispatchQueue.main.async {
-//         
-//         context.coordinator.calculateNewHeight(text, swiftDown.editorHeight)
-//         
-//      }
+      if textView.editorHeight > self.minHeight {
+         
+         self.output(self.minHeight)
+      } else {
+         
+            Task {
+               
+               heightCalculation(for: textView.editorHeight)
+               
+            }
+         
+      }
       
       return textView
    }
    
-   public func updateNSView(_ nsView: CustomTextView, context: Context) {
-      context.coordinator.parent = self
+   public func updateNSView(_ textView: CustomTextView, context: Context) {
+      //      context.coordinator.parent = self
       context.coordinator.cancellable?.cancel()
       context.coordinator.cancellable = Timer
          .publish(every: debounceTime, on: .current, in: .default)
          .autoconnect()
          .first()
          .sink { _ in
-            let selectedRanges = nsView.selectedRanges
-            nsView.string = text
-            nsView.applyStyles()
-            context.coordinator.calculateNewHeight(text, nsView.editorHeight)
-            nsView.selectedRanges = selectedRanges
-      
+            let selectedRanges = textView.selectedRanges
+            textView.string = text
+            textView.applyStyles()
+            
+            self.calculateNewHeight(for: textView)
+            textView.selectedRanges = selectedRanges
          }
+      
+      
       
    }
    
@@ -221,7 +232,8 @@ extension SwiftDownEditor {
    public class Coordinator: NSObject, NSTextViewDelegate {
       var parent: SwiftDownEditor
       var cancellable: Cancellable?
-      var previousHeight: CGFloat = 0
+      
+      var previousHeight: CGFloat = .zero
       
       init(_ parent: SwiftDownEditor) {
          self.parent = parent
@@ -233,8 +245,8 @@ extension SwiftDownEditor {
          
          self.parent.text = textView.string
          
-         calculateNewHeight(textView.string, textView.editorHeight)
-
+//         self.parent.calculateNewHeight(for: textView)
+         
       }
       
       public func textViewDidChangeSelection(_ notification: Notification) {
@@ -245,14 +257,29 @@ extension SwiftDownEditor {
       }
       
       
-      func calculateNewHeight(_ text: String, _ newHeight: CGFloat) {
-         let clampedHeight = max(newHeight, 20)
-         
-         if abs(newHeight - self.previousHeight) > 0.1 {
-            self.parent.onTextChange(text, clampedHeight)
-            self.previousHeight = clampedHeight
+   }
+   
+   @MainActor
+   private func calculateNewHeight(for textView: CustomTextView) {
+      
+      guard let coordinator = textView.delegate as? Coordinator else { return }
+      
+      if abs(textView.editorHeight - coordinator.previousHeight) > 0.1 {
+         let finalResult = heightCalculation(for: textView.editorHeight)
+
+         Task { @MainActor in
+            self.output(finalResult)
+            coordinator.previousHeight = finalResult
          }
       }
+   } // END calc new height
+   
+   private func heightCalculation(for height: CGFloat) -> CGFloat {
+      let clampedHeight = max(height, self.minHeight)
+      let insetCompensation = self.insetsSize * 2
+      let finalValue: CGFloat = clampedHeight + insetCompensation
+      
+      return finalValue
    }
 }
 #endif
@@ -288,22 +315,17 @@ struct SwiftDownExampleView: View {
    
    @State private var text: String = "Usually, `NSTextView` manages the *layout* process inside **the viewport** interacting ~~with its delegate~~. A `viewport` is a _rectangular_ area within a ==flipped coordinate system== expanding along the y-axis, with __bold alternate__, as well as ***bold italic*** emphasis."
    
-   @State private var boundEditorHeight: CGFloat = .zero
    @State private var closureEditorHeight: CGFloat = .zero
    
    var body: some View {
       
       VStack {
-         Text("Bound Editor height: \(boundEditorHeight)")
-         Text("Closure Editor height: \(closureEditorHeight)")
-         SwiftDownEditor(
-            text: $text,
-            onTextChange: {
-            text, editorHeight in
-            closureEditorHeight = editorHeight
+         Text("Editor height: \(closureEditorHeight)")
+         SwiftDownEditor(text: $text, output: { height in
+            closureEditorHeight = height
          })
-            .frame(height: closureEditorHeight)
-            .border(Color.green.opacity(0.3))
+         .frame(height: closureEditorHeight)
+         .border(Color.green.opacity(0.3))
          Spacer()
       }
       
