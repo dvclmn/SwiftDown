@@ -120,7 +120,7 @@
     // MARK: - ScrollView setup
     private lazy var scrollView: NSScrollView = {
       let scrollView = NSScrollView()
-      scrollView.drawsBackground = true
+      scrollView.drawsBackground = false
       scrollView.borderType = .noBorder
       scrollView.hasVerticalScroller = true
       scrollView.hasHorizontalRuler = false
@@ -143,7 +143,7 @@
       textView.storage.applyBody = { Theme.applyBody(with: self.theme) }
       textView.storage.theme = theme
       textView.autoresizingMask = .width
-      textView.drawsBackground = true
+      textView.drawsBackground = false
       textView.isEditable = self.isEditable
       textView.isHorizontallyResizable = false
       textView.isVerticallyResizable = true
