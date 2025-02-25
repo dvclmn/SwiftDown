@@ -143,7 +143,7 @@ public struct SwiftDownEditor: UIViewRepresentable {
 #else
   // MARK: - SwiftDownEditor macOS
   public struct SwiftDownEditor: NSViewRepresentable {
-    private var debounceTime = 0.3
+    private var debounceTime = 0.15
     @Binding var text: String {
       didSet {
         onTextChange(text)
@@ -159,10 +159,12 @@ public struct SwiftDownEditor: UIViewRepresentable {
 
     public init(
       text: Binding<String>,
+      isEditable: Bool = true,
       onTextChange: @escaping (String) -> Void = { _ in },
       onSelectionChange: @escaping (NSRange) -> Void = { _ in }
     ) {
       _text = text
+      self.isEditable = isEditable
       self.onTextChange = onTextChange
       self.onSelectionChange = onSelectionChange
     }

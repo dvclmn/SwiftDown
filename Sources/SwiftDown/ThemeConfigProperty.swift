@@ -66,6 +66,7 @@ enum StyleConfigProperty {
 enum TraitConfigProperty {
   case bold
   case italic
+  case mono
   case expanded
   case condensed
   case unknown
@@ -77,6 +78,7 @@ enum TraitConfigProperty {
   private static let mapping: [String: TraitConfigProperty] = [
     "bold": .bold,
     "italic": .italic,
+    "mono": .mono,
     "expanded": .expanded,
     "condensed": .condensed
   ]

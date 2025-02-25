@@ -8,9 +8,9 @@
 import Foundation
 
 #if os(iOS)
-  import struct UIKit.CGFloat
+import struct UIKit.CGFloat
 #elseif os(macOS)
-  import struct AppKit.CGFloat
+import struct AppKit.CGFloat
 #endif
 
 extension UniversalColor {
@@ -23,14 +23,14 @@ extension UniversalColor {
     let g: UInt64
     let b: UInt64
     switch hex.count {
-    case 3:  // RGB (12-bit)
-      (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-    case 6:  // RGB (24-bit)
-      (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-    case 8:  // ARGB (32-bit)
-      (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-    default:
-      (a, r, g, b) = (255, 0, 0, 0)
+      case 3:  // RGB (12-bit)
+        (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+      case 6:  // RGB (24-bit)
+        (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+      case 8:  // ARGB (32-bit)
+        (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+      default:
+        (a, r, g, b) = (255, 0, 0, 0)
     }
     self.init(
       red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255,
@@ -87,28 +87,30 @@ extension UniversalFont {
     }
 
     let descriptor =
-    fontDescriptor.withSymbolicTraits(traits)
+      fontDescriptor.withSymbolicTraits(traits)
 
     return UniversalFont(descriptor: descriptor, size: size)
   }
 
   private func getTraits(from traits: TraitConfigProperty) -> UniversalTraits? {
     #if os(iOS)
-      switch traits {
+    switch traits {
       case .italic: return .traitItalic
       case .bold: return .traitBold
+      case .mono: return .monoSpace
       case .expanded: return .traitExpanded
       case .condensed: return .traitCondensed
       default: return nil
-      }
+    }
     #elseif os(macOS)
-      switch traits {
+    switch traits {
       case .italic: return .italic
       case .bold: return .bold
+      case .mono: return .monoSpace
       case .expanded: return .expanded
       case .condensed: return .condensed
       default: return nil
-      }
+    }
     #endif
   }
 }
