@@ -90,6 +90,8 @@ public struct Theme {
     var fontSize: CGFloat = 15
     var font: UniversalFont? = UniversalFont.systemFont(ofSize: fontSize)
     var fontTraits = ""
+    
+    stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
       
     attributes.forEach { key, value in
       switch StyleConfigProperty.from(rawValue: key) {
@@ -99,55 +101,41 @@ public struct Theme {
           if let colorString = value as? String {
             
             if let markdownType = MarkdownNode.MarkdownType.from(string: colorString) {
-              // Now switch over the actual enum case
+              
               switch markdownType {
                 case .header1:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.red
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemBrown
                   
                 case .header2:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.blue
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemTeal
+                  
+                case .header3, .header4, .header5, .header6:
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemIndigo
                   
                 case .quote:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.gray
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemGray
                   
                 case .code, .codeBlock:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.green
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemBrown
                   
                 case .italic:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.purple
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemPurple
                   
-                  // Add other cases as needed
+                case .list:
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemOrange
                   
-                default:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
+                case .link, .image:
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemMint
+                  
+                case .bold:
+                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemGreen.withAlphaComponent(0.9)
+
+                case .body:
+                  break
               }
-            } else {
-              // Handle the case where the string doesn't match any known MarkdownType
-              stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
             }
           }
-          
-//          if let color = value as? String {
-//            
-//
-//            switch markdownTypes {
-//              case .header1:
-//                break
-//                
-//              case .body:
-//                break
-//            }
-//            
-//            switch color {
-//              case let str where str == "h2":
-//                stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.red
-//                
-//              default:
-//                stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
-//            }
-//            
-//          }
-          
+
         case .font:
           if let fontName = value as? String, fontName != "System" {
             font = UniversalFont(name: fontName, size: fontSize) ?? font
