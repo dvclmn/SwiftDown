@@ -60,9 +60,9 @@ public struct Theme {
 
   mutating func configure(_ theme: MarkdownTheme) {
     configureEditor(theme.editor)
-    
   }
 
+  
   mutating func configure(_ data: [String: AnyObject]) {
     data.forEach { key, value in
       switch ConfigProperty.from(rawValue: key) {
@@ -81,17 +81,17 @@ public struct Theme {
   }
 
   mutating private func configureStyles(_ style: MarkdownTheme) {
-    
-//    attributes.forEach { key, value in
-//      if let value = value as? [String: AnyObject],
-//         let style = configureStyle(value as [String: AnyObject]),
-//         let mdType = MarkdownNode.MarkdownType.from(string: key)
-//      {
-//        styles[mdType] = Style(attributes: style)
-//      }
-//    }
+
+    //    attributes.forEach { key, value in
+    //      if let value = value as? [String: AnyObject],
+    //         let style = configureStyle(value as [String: AnyObject]),
+    //         let mdType = MarkdownNode.MarkdownType.from(string: key)
+    //      {
+    //        styles[mdType] = Style(attributes: style)
+    //      }
+    //    }
   }
-  
+
   mutating private func configureStyles(_ attributes: [String: AnyObject]) {
     attributes.forEach { key, value in
       if let value = value as? [String: AnyObject],
@@ -184,7 +184,7 @@ public struct Theme {
     tintColor = style.tintColor
     cursorColor = style.cursorColor
   }
-  
+
   mutating private func configureEditor(_ attributes: [String: String]) {
     attributes.forEach { key, value in
       switch EditorConfigProperty.from(rawValue: key) {
@@ -205,7 +205,9 @@ public struct Theme {
       let json = try String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8)
       if let data = json.data(using: .utf8) {
         do {
-          return try JSONSerialization.jsonObject(with: data, options: []) as? [String: AnyObject]
+          let jsonResult = try JSONSerialization.jsonObject(with: data, options: []) as? [String: AnyObject]
+          //          dump(jsonResult, indent: 2)
+          return jsonResult
         } catch let error as NSError {
           print(error)
         }
@@ -220,9 +222,7 @@ public struct Theme {
   // MARK: - Static methods
   static func applyMarkdown(
     markdown: MarkdownNode, with theme: Theme
-  ) -> [NSAttributedString.Key:
-    Any]
-  {
+  ) -> [NSAttributedString.Key: Any] {
     guard let attributes = theme.styles[markdown.type]?.attributes else { return [:] }
     return attributes
   }
