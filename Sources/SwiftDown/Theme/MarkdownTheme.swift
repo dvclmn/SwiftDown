@@ -12,23 +12,41 @@ import AppKit
 #endif
 
 extension MarkdownNode.MarkdownType {
+  
   var defaultColor: UniversalColor {
     switch self {
-      case .quote: return .labelColor
-      case .list: return .labelColor
-      case .codeBlock: return .systemBrown
-      case .header1: return .systemOrange
-      case .header2: return .labelColor
-      case .header3: return .labelColor
-      case .header4: return .labelColor
-      case .header5: return .labelColor
-      case .header6: return .labelColor
-      case .code: return .systemBrown
-      case .italic: return .systemIndigo
-      case .bold: return .labelColor
-      case .link: return .labelColor
-      case .image: return .labelColor
-      case .body: return .labelColor
+      case .quote: .labelColor
+      case .list: .labelColor
+      case .codeBlock: .systemBrown
+      case .header1: .systemOrange
+      case .header2: .labelColor
+      case .header3: .labelColor
+      case .header4: .labelColor
+      case .header5: .labelColor
+      case .header6: .labelColor
+      case .code: .systemBrown
+      case .italic: .systemIndigo
+      case .bold: .labelColor
+      case .link: .labelColor
+      case .image: .labelColor
+      case .body: .labelColor
+    }
+  }
+  
+  var defaultFont: FontConfig {
+    switch self {
+      case .quote: FontConfig.body
+      case .codeBlock: FontConfig.bold
+      case .header1: FontConfig.systemBold(withSize: 24)
+      case .header2: FontConfig.systemBold(withSize: 21)
+      case .header3: FontConfig.systemBold(withSize: 19)
+      case .header4: FontConfig.systemBold(withSize: 16)
+      case .header5: FontConfig.systemBold(withSize: 15)
+      case .header6: FontConfig.bold
+      case .code: FontConfig.monospace
+      case .italic: FontConfig.italic
+      case .bold: FontConfig.bold
+      case .body, .list, .image, .link: FontConfig.body
     }
   }
 }

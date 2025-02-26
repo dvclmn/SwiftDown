@@ -54,11 +54,10 @@ extension MarkdownTheme {
     static let defaults: ThemeColors = .init()
   }
 
-  // MARK: - Colours
+  // MARK: - Fonts
   public struct ThemeFonts {
     public var fonts: MarkdownFontMap = [:]
 
-    public init() {}
   }
 
   // MARK: - Editor Styles
