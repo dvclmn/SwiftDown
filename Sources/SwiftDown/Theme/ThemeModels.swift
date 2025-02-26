@@ -48,15 +48,14 @@ extension MarkdownTheme {
 
   // MARK: - Colours
   public struct ThemeColors {
-
-    private var values: MarkdownColorMap = .defaultColours
-
+    private var colours: MarkdownColorMap = .defaultColours
     static let defaults: ThemeColors = .init()
   }
 
   // MARK: - Fonts
   public struct ThemeFonts {
     public var fonts: MarkdownFontMap = [:]
+    static let defaults: ThemeFonts = .init()
 
   }
 
@@ -70,22 +69,40 @@ extension MarkdownTheme {
   }
 }
 
-extension Dictionary where Key == MarkdownNode.MarkdownType {
-  
-  static var defaultColours: MarkdownColorMap {
-    var map: [MarkdownNode.MarkdownType: UniversalColor] = [:]
+extension MarkdownTheme {
+
+  // Convert your structured theme to NSAttributedString attributes
+  func attributesFor(type: MarkdownNode.MarkdownType) -> [NSAttributedString.Key: Any] {
+    var attributes: [NSAttributedString.Key: Any] = [:]
+
+    /// Apply color
+    attributes[.foregroundColor] = colors[type]
+
     
-    for type in MarkdownNode.MarkdownType.allCases {
-      map[type] = type.defaultColor
+    if let fontConfig = fonts.fonts[type] {
+      attributes[.font] = fontConfig.resolvedFont()
+      attributes[.foregroundColor] = colors[type]
     }
-    return map
+
+    return attributes
   }
+
+  //  func attributes(for node: MarkdownNode) -> [NSAttributedString.Key: Any] {
+  //    var attributes: [NSAttributedString.Key: Any] = [:]
+  //
+  //    if let fontConfig = fonts.fonts[node.type] {
+  //      attributes[.font] = fontConfig.resolvedFont()
+  //      attributes[.foregroundColor] = colors[node.type]
+  //    }
+  //
+  //    return attributes
+  //  }
 }
 
 extension MarkdownTheme.ThemeColors {
   public subscript(type: MarkdownNode.MarkdownType) -> NSColor {
-    get { values[type] ?? .labelColor }
-    set { values[type] = newValue }
+    get { colours[type] ?? .labelColor }
+    set { colours[type] = newValue }
   }
 }
 
@@ -104,5 +121,29 @@ extension MarkdownTheme.EditorStyles {
           return .clear
       }
     }
+  }
+}
+
+extension Dictionary where Key == MarkdownNode.MarkdownType {
+
+  static var defaultColours: MarkdownColorMap {
+    var map: MarkdownColorMap = [:]
+
+    for type in MarkdownNode.MarkdownType.allCases {
+      map[type] = type.defaultColor
+    }
+    return map
+  }
+}
+
+extension Dictionary where Key == FontStyleType {
+
+  static var defaultFonts: MarkdownFontMap {
+    var map: MarkdownFontMap = [:]
+
+    for type in MarkdownNode.MarkdownType.allCases {
+      map[type] = type.defaultFont()
+    }
+    return map
   }
 }

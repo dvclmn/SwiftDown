@@ -81,7 +81,7 @@ public struct Theme {
   }
 
   mutating private func configureStyles(_ style: MarkdownTheme) {
-
+//let style =
     //    attributes.forEach { key, value in
     //      if let value = value as? [String: AnyObject],
     //         let style = configureStyle(value as [String: AnyObject]),
@@ -102,6 +102,25 @@ public struct Theme {
       }
     }
   }
+  
+  mutating private func configureStyle(
+    theme: MarkdownTheme
+//    _ attributes: [String: AnyObject]
+  ) -> [NSAttributedString
+    .Key: Any]?
+  {
+    var stringAttributes: [NSAttributedString.Key: Any] = [:]
+    var fontSize: CGFloat = 15
+//    var font: UniversalFont? = UniversalFont.systemFont(ofSize: fontSize)
+//    var fontTraits = ""
+    
+    stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
+    
+    
+    
+  }
+  
+  
 
   mutating private func configureStyle(
     _ attributes: [String: AnyObject]

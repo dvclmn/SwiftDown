@@ -11,27 +11,6 @@ import UIKit
 import AppKit
 #endif
 
-/// ```
-/// // System font with design and traits
-/// let titleFont = FontConfig.system(
-///   weight: .bold,
-///   design: .serif,
-///   size: 20,
-///   traits: [.italic]
-/// )
-///
-/// // Custom font with traits
-/// let customFont = FontConfig.custom(
-///   name: "Comic Sans",
-///   size: 14,
-///   traits: [.bold, .italic]
-/// )
-///
-/// // Using presets
-/// let bodyFont = FontConfig.body
-/// let codeFont = FontConfig.monospace
-/// ```
-
 public enum FontDescriptor {
   case system(weight: NSFont.Weight, design: NSFontDescriptor.SystemDesign)
   case named(String)
@@ -46,8 +25,6 @@ public struct FontConfig {
   public var size: CGFloat
   public var descriptor: FontDescriptor
   public var traits: NSFontDescriptor.SymbolicTraits
-
-  //  static let defaultFontSize: CGFloat = 14
 
   public init(
     descriptor: FontDescriptor,
@@ -95,7 +72,9 @@ public struct FontConfig {
   }
 }
 
-enum FontPresetGroup: CaseIterable {
+typealias FontPresetGroup = [FontStyleType: FontConfig]
+
+enum FontStyleType: CaseIterable {
   case bold
   case italic
   case boldItalic
@@ -112,16 +91,16 @@ enum FontPresetGroup: CaseIterable {
     }
   }
 
-  public func presetGroup(withSize size: CGFloat) -> FontGroup {
-    var map: FontGroup = [:]
-    for preset in Self.allCases {
+  public func presetGroup(withSize size: CGFloat) -> FontPresetGroup {
+    var map: FontPresetGroup = [:]
+    for preset in FontStyleType.allCases {
       map[preset] = preset.preset(withSize: size)
     }
     return map
   }
 }
 
-typealias FontGroup = [FontPresetGroup: FontConfig]
+
 
 // MARK: - Presets
 extension FontConfig {
@@ -130,39 +109,26 @@ extension FontConfig {
   public static let italic = FontConfig.system(size: 14, traits: .italic)
   public static let bold = FontConfig.system(size: 14, weight: .bold)
   public static let boldItalic = FontConfig.system(size: 14, weight: .bold, traits: .italic)
-
 }
 
 extension FontConfig {
   public func resolvedFont() -> NSFont? {
     switch descriptor {
       case .system(let weight, let design):
-        resolveSystem(weight: weight, design: design)
+        let baseFont = NSFont.systemFont(ofSize: size, weight: weight)
+        let descriptor = buildDescriptor(baseFont: baseFont)
+        return NSFont(descriptor: descriptor, size: size)
+        
       case .named(let name):
-        resolveNamed(name)
+        guard let baseFont = NSFont(name: name, size: size) else {
+          return nil
+        }
+        let descriptor = buildDescriptor(baseFont: baseFont)
+        return NSFont(descriptor: descriptor, size: size)
     }
   }
 
-  private func resolveSystem(
-    weight: NSFont.Weight,
-    design: NSFontDescriptor.SystemDesign
-  ) -> NSFont? {
-
-    let baseFont = NSFont.systemFont(ofSize: size, weight: weight)
-    let descriptor = combineTraits(baseFont: baseFont)
-
-    return NSFont(descriptor: descriptor, size: size)
-  }
-
-  private func resolveNamed(_ name: String) -> NSFont? {
-    guard let baseFont = NSFont(name: name, size: size) else {
-      return nil
-    }
-    let descriptor = combineTraits(baseFont: baseFont)
-    return NSFont(descriptor: descriptor, size: size)
-  }
-  
-  private func combineTraits(
+  private func buildDescriptor(
     baseFont: NSFont,
     design: NSFontDescriptor.SystemDesign? = nil
   ) -> NSFontDescriptor {
