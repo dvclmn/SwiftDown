@@ -12,6 +12,7 @@ import AppKit
 #endif
 
 public struct Theme {
+
   // MARK: - BuildIn
   public enum BuiltIn: String {
     case defaultDark = "default-dark"
@@ -21,6 +22,11 @@ public struct Theme {
       return Theme(self.rawValue)
     }
   }
+
+  typealias ThemeData = [String: AnyObject]
+  typealias EditorData = [String: String]
+  typealias StyleData = [String: AnyObject]
+  typealias SingleStyleData = [String: AnyObject]
 
   var backgroundColor: UniversalColor = UniversalColor.clear
   var tintColor: UniversalColor = UniversalColor.blue
@@ -60,18 +66,18 @@ public struct Theme {
 
   mutating func configure(_ theme: MarkdownTheme) {
     configureEditor(theme.editor)
+    configureStyles(theme)
   }
 
-  
-  mutating func configure(_ data: [String: AnyObject]) {
+  mutating func configure(_ data: ThemeData) {
     data.forEach { key, value in
       switch ConfigProperty.from(rawValue: key) {
         case .editor:
-          if let editorStyles = value as? [String: String] {
+          if let editorStyles = value as? EditorData {
             configureEditor(editorStyles)
           }
         case .styles:
-          if let styles = value as? [String: AnyObject] {
+          if let styles = value as? StyleData {
             configureStyles(styles)
           }
         case .unknown:
@@ -80,50 +86,41 @@ public struct Theme {
     }
   }
 
-  mutating private func configureStyles(_ style: MarkdownTheme) {
-//let style =
-    //    attributes.forEach { key, value in
-    //      if let value = value as? [String: AnyObject],
-    //         let style = configureStyle(value as [String: AnyObject]),
-    //         let mdType = MarkdownNode.MarkdownType.from(string: key)
-    //      {
-    //        styles[mdType] = Style(attributes: style)
-    //      }
-    //    }
+  mutating private func configureStyles(_ theme: MarkdownTheme) {
+    
+    for mdType in MarkdownNode.MarkdownType.allCases {
+
+      var attributes: [NSAttributedString.Key: Any] = [:]
+
+      /// Add colors
+      attributes[.foregroundColor] = theme.colors[mdType]
+
+      /// Add fonts, if available
+      if let font = theme.fonts.fonts[mdType]?.resolvedFont() {
+        attributes[.font] = font
+
+      } else {
+        /// Use default font for this markdown type
+        attributes[.font] = mdType.defaultFont().resolvedFont()
+      }
+
+      styles[mdType] = Style(attributes: attributes)
+    }
   }
 
-  mutating private func configureStyles(_ attributes: [String: AnyObject]) {
+  mutating private func configureStyles(_ attributes: StyleData) {
     attributes.forEach { key, value in
-      if let value = value as? [String: AnyObject],
-        let style = configureStyle(value as [String: AnyObject]),
+      if let value = value as? SingleStyleData,
+        let style = configureStyle(value as SingleStyleData),
         let mdType = MarkdownNode.MarkdownType.from(string: key)
       {
         styles[mdType] = Style(attributes: style)
       }
     }
   }
-  
-  mutating private func configureStyle(
-    theme: MarkdownTheme
-//    _ attributes: [String: AnyObject]
-  ) -> [NSAttributedString
-    .Key: Any]?
-  {
-    var stringAttributes: [NSAttributedString.Key: Any] = [:]
-    var fontSize: CGFloat = 15
-//    var font: UniversalFont? = UniversalFont.systemFont(ofSize: fontSize)
-//    var fontTraits = ""
-    
-    stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
-    
-    
-    
-  }
-  
-  
 
-  mutating private func configureStyle(
-    _ attributes: [String: AnyObject]
+  private func configureStyle(
+    _ attributes: SingleStyleData
   ) -> [NSAttributedString
     .Key: Any]?
   {
@@ -131,52 +128,13 @@ public struct Theme {
     var fontSize: CGFloat = 15
     var font: UniversalFont? = UniversalFont.systemFont(ofSize: fontSize)
     var fontTraits = ""
-
-    stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.labelColor
-
     attributes.forEach { key, value in
       switch StyleConfigProperty.from(rawValue: key) {
         case .color:
-
-          if let colorString = value as? String {
-
-            if let markdownType = MarkdownNode.MarkdownType.from(string: colorString) {
-
-              switch markdownType {
-                case .header1:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemBrown
-
-                case .header2:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemTeal
-
-                case .header3, .header4, .header5, .header6:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemIndigo
-
-                case .quote:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemGray
-
-                case .code, .codeBlock:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemBrown
-
-                case .italic:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemPurple
-
-                case .list:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemOrange
-
-                case .link, .image:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemMint
-
-                case .bold:
-                  stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor.systemGreen
-                    .withAlphaComponent(0.9)
-
-                case .body:
-                  break
-              }
-            }
+          if let color = value as? String {
+            stringAttributes[NSAttributedString.Key.foregroundColor] = UniversalColor(
+              hexString: color)
           }
-
         case .font:
           if let fontName = value as? String, fontName != "System" {
             font = UniversalFont(name: fontName, size: fontSize) ?? font
@@ -198,13 +156,14 @@ public struct Theme {
     return stringAttributes
   }
 
+
   mutating private func configureEditor(_ style: MarkdownTheme.EditorStyles) {
     backgroundColor = style.backgroundColor.asUniversalColor
     tintColor = style.tintColor
     cursorColor = style.cursorColor
   }
 
-  mutating private func configureEditor(_ attributes: [String: String]) {
+  mutating private func configureEditor(_ attributes: EditorData) {
     attributes.forEach { key, value in
       switch EditorConfigProperty.from(rawValue: key) {
         case .backgroundColor:
@@ -219,7 +178,7 @@ public struct Theme {
     }
   }
 
-  private func convertFile(_ path: String) -> [String: AnyObject]? {
+  private func convertFile(_ path: String) -> ThemeData? {
     do {
       let json = try String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8)
       if let data = json.data(using: .utf8) {

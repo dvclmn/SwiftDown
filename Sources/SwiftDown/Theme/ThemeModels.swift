@@ -36,9 +36,21 @@ import AppKit
 /// ```
 
 public struct MarkdownTheme {
-  public var colors: ThemeColors = .defaults
-  public var fonts: ThemeFonts = ThemeFonts()
-  public var editor: EditorStyles = .defaults
+  public var colors: ThemeColors
+  public var fonts: ThemeFonts
+  public var editor: EditorStyles
+  
+  public static let defaultTheme: MarkdownTheme = .init()
+  
+  public init(
+    colors: ThemeColors = .defaults,
+    fonts: ThemeFonts = .defaults,
+    editor: EditorStyles = .defaults
+  ) {
+    self.colors = colors
+    self.fonts = fonts
+    self.editor = editor
+  }
 }
 
 public typealias MarkdownColorMap = [MarkdownNode.MarkdownType: NSColor]
@@ -49,14 +61,13 @@ extension MarkdownTheme {
   // MARK: - Colours
   public struct ThemeColors {
     private var colours: MarkdownColorMap = .defaultColours
-    static let defaults: ThemeColors = .init()
+    public static let defaults: ThemeColors = .init()
   }
 
   // MARK: - Fonts
   public struct ThemeFonts {
     public var fonts: MarkdownFontMap = [:]
-    static let defaults: ThemeFonts = .init()
-
+    public static let defaults: ThemeFonts = .init()
   }
 
   // MARK: - Editor Styles
@@ -65,20 +76,18 @@ extension MarkdownTheme {
     var tintColor: NSColor = .controlAccentColor
     var cursorColor: NSColor = .blue
 
-    static let defaults: EditorStyles = .init()
+    public static let defaults: EditorStyles = .init()
   }
 }
 
 extension MarkdownTheme {
 
-  // Convert your structured theme to NSAttributedString attributes
-  func attributesFor(type: MarkdownNode.MarkdownType) -> [NSAttributedString.Key: Any] {
+  func attributes(forType type: MarkdownNode.MarkdownType) -> [NSAttributedString.Key: Any] {
     var attributes: [NSAttributedString.Key: Any] = [:]
 
     /// Apply color
     attributes[.foregroundColor] = colors[type]
 
-    
     if let fontConfig = fonts.fonts[type] {
       attributes[.font] = fontConfig.resolvedFont()
       attributes[.foregroundColor] = colors[type]
@@ -87,16 +96,6 @@ extension MarkdownTheme {
     return attributes
   }
 
-  //  func attributes(for node: MarkdownNode) -> [NSAttributedString.Key: Any] {
-  //    var attributes: [NSAttributedString.Key: Any] = [:]
-  //
-  //    if let fontConfig = fonts.fonts[node.type] {
-  //      attributes[.font] = fontConfig.resolvedFont()
-  //      attributes[.foregroundColor] = colors[node.type]
-  //    }
-  //
-  //    return attributes
-  //  }
 }
 
 extension MarkdownTheme.ThemeColors {
