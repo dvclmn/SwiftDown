@@ -35,16 +35,19 @@ import AppKit
 ///
 /// ```
 
+public typealias MarkdownColorMap = [MarkdownNode.MarkdownType: NSColor]
+public typealias MarkdownFontMap = [MarkdownNode.MarkdownType: FontConfig]
+
 public struct MarkdownTheme {
-  public var colors: ThemeColors
-  public var fonts: ThemeFonts
+  public var colors: Colors
+  public var fonts: Fonts
   public var editor: EditorStyles
   
   public static let defaultTheme: MarkdownTheme = .init()
   
   public init(
-    colors: ThemeColors = .defaults,
-    fonts: ThemeFonts = .defaults,
+    colors: Colors = .defaults,
+    fonts: Fonts = .defaults,
     editor: EditorStyles = .defaults
   ) {
     self.colors = colors
@@ -53,21 +56,39 @@ public struct MarkdownTheme {
   }
 }
 
-public typealias MarkdownColorMap = [MarkdownNode.MarkdownType: NSColor]
-public typealias MarkdownFontMap = [MarkdownNode.MarkdownType: FontConfig]
+
+
+
+protocol VisualProperty {
+  var style: AnyHashable { get }
+}
+
+extension MarkdownTheme {
+  public func set(
+    _ type: MarkdownNode.MarkdownType,
+    _ value: CGFloat
+  ) -> Self {
+    var copy = self
+//    copy.fonts[type] =
+    copy.fonts.setFont(type, value: value)
+    
+    return copy
+  }
+}
+
 
 extension MarkdownTheme {
 
   // MARK: - Colours
-  public struct ThemeColors {
+  public struct Colors {
     private var colours: MarkdownColorMap = .defaultColours
-    public static let defaults: ThemeColors = .init()
+    public static let defaults: Colors = .init()
   }
 
   // MARK: - Fonts
-  public struct ThemeFonts {
+  public struct Fonts {
     public var fonts: MarkdownFontMap = [:]
-    public static let defaults: ThemeFonts = .init()
+    public static let defaults: Fonts = .init()
   }
 
   // MARK: - Editor Styles
@@ -98,15 +119,37 @@ extension MarkdownTheme {
 
 }
 
-extension MarkdownTheme.ThemeColors {
+extension MarkdownTheme.Colors {
   public subscript(type: MarkdownNode.MarkdownType) -> NSColor {
     get { colours[type] ?? .labelColor }
     set { colours[type] = newValue }
   }
 }
 
-// MARK: - Background Style
+extension MarkdownTheme.Fonts {
+  public subscript(type: MarkdownNode.MarkdownType) -> FontConfig {
+    get { fonts[type] ?? .system(size: 14) }
+    set { fonts[type] = newValue }
+  }
+//  public subscript(type: MarkdownNode.MarkdownType) -> NSFont {
+//    get { fonts[type] ?? .systemFont(ofSize: 14) }
+//    set { fonts[type] = newValue }
+//  }
+}
 
+
+extension MarkdownTheme.Fonts {
+  mutating func setFont(_ type: MarkdownNode.MarkdownType, value: CGFloat) {
+    var currentFont = fonts[type]
+    currentFont?.setSize(value)
+  }
+}
+
+
+
+
+
+// MARK: - EditorStyles
 extension MarkdownTheme.EditorStyles {
   enum BackgroundStyle {
     case color(NSColor)
@@ -123,6 +166,7 @@ extension MarkdownTheme.EditorStyles {
   }
 }
 
+// MARK: - Extensions
 extension Dictionary where Key == MarkdownNode.MarkdownType {
 
   static var defaultColours: MarkdownColorMap {

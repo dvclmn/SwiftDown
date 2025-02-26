@@ -237,7 +237,13 @@ extension SwiftDownEditor {
     editor.theme = theme
     return editor
   }
-
+  
+  public func theme(_ theme: MarkdownTheme) -> Self {
+    var editor = self
+    editor.theme = Theme(theme: theme)
+    return editor
+  }
+  
   public func isEditable(_ isEditable: Bool) -> Self {
     var editor = self
     editor.isEditable = isEditable

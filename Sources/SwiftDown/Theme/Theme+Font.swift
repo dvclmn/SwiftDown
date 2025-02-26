@@ -35,6 +35,14 @@ public struct FontConfig {
     self.size = size
     self.traits = traits
   }
+  
+  public mutating func setSize(_ newSize: CGFloat) {
+    size = newSize
+  }
+  
+//  public mutating func setWeight(_ newWeight: NSFont.Weight) {
+//    size = newSize
+//  }
 
   public static func system(
     size: CGFloat,
@@ -103,20 +111,20 @@ enum FontStyleType: CaseIterable {
 
 
 // MARK: - Presets
-extension FontConfig {
-  public static let body = FontConfig.system(size: 14)
-  public static let monospace = FontConfig.system(size: 14, design: .monospaced)
-  public static let italic = FontConfig.system(size: 14, traits: .italic)
-  public static let bold = FontConfig.system(size: 14, weight: .bold)
-  public static let boldItalic = FontConfig.system(size: 14, weight: .bold, traits: .italic)
-}
+//extension FontConfig {
+//  public static let body = FontConfig.system(size: 14)
+//  public static let monospace = FontConfig.system(size: 14, design: .monospaced)
+//  public static let italic = FontConfig.system(size: 14, traits: .italic)
+//  public static let bold = FontConfig.system(size: 14, weight: .bold)
+//  public static let boldItalic = FontConfig.system(size: 14, weight: .bold, traits: .italic)
+//}
 
 extension FontConfig {
   public func resolvedFont() -> NSFont? {
     switch descriptor {
       case .system(let weight, let design):
         let baseFont = NSFont.systemFont(ofSize: size, weight: weight)
-        let descriptor = buildDescriptor(baseFont: baseFont)
+        let descriptor = buildDescriptor(baseFont: baseFont, design: design)
         return NSFont(descriptor: descriptor, size: size)
         
       case .named(let name):
