@@ -47,10 +47,20 @@ public struct Theme {
     }
   }
 
+  public init(theme: MarkdownTheme) {
+    self.init()
+    configure(theme)
+  }
+
   public init() {
     MarkdownNode.MarkdownType.allCases.forEach { type in
       styles[type] = Style()
     }
+  }
+
+  mutating func configure(_ theme: MarkdownTheme) {
+    configureEditor(theme.editor)
+    
   }
 
   mutating func configure(_ data: [String: AnyObject]) {
@@ -70,6 +80,18 @@ public struct Theme {
     }
   }
 
+  mutating private func configureStyles(_ style: MarkdownTheme) {
+    
+//    attributes.forEach { key, value in
+//      if let value = value as? [String: AnyObject],
+//         let style = configureStyle(value as [String: AnyObject]),
+//         let mdType = MarkdownNode.MarkdownType.from(string: key)
+//      {
+//        styles[mdType] = Style(attributes: style)
+//      }
+//    }
+  }
+  
   mutating private func configureStyles(_ attributes: [String: AnyObject]) {
     attributes.forEach { key, value in
       if let value = value as? [String: AnyObject],
@@ -157,6 +179,12 @@ public struct Theme {
     return stringAttributes
   }
 
+  mutating private func configureEditor(_ style: MarkdownTheme.EditorStyles) {
+    backgroundColor = style.backgroundColor.asUniversalColor
+    tintColor = style.tintColor
+    cursorColor = style.cursorColor
+  }
+  
   mutating private func configureEditor(_ attributes: [String: String]) {
     attributes.forEach { key, value in
       switch EditorConfigProperty.from(rawValue: key) {
