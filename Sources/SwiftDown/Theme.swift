@@ -88,7 +88,6 @@ public struct Theme {
   {
     var stringAttributes: [NSAttributedString.Key: Any] = [:]
     var fontSize: CGFloat = 15
-    //    var font: UniversalFont? = UniversalFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
     var font: UniversalFont? = UniversalFont.systemFont(ofSize: fontSize)
     var fontTraits = ""
 
